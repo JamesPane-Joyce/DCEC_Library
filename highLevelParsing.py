@@ -1,5 +1,6 @@
 import prototypes
 import cleaning
+import random
 
 class Token:
     def __init__(self,funcname,args):
@@ -370,24 +371,51 @@ def distinguishFunctions(args,namespace,addAtomics,addFunctions):
                 return False
     return True
 
-def popQuantifiers(args,namespace,quantifiers,addAtomics,addFunctions):
+def checkPrenex(args,addQuants):
+    for arg in args:
+        if arg in addQuants.keys() and not 'QUANT' in arg:
+            print "WARNING: not using prenex form. This may cause an error if improperly handled. Use prenex form and make sure that your quantifiers are unique."
+
+def nextInternal(namespace):
+    if not "TEMP" in namespace.quantMap.keys():
+        namespace.quantMap["TEMP"] = 0
+        nextnumber = 0
+    else:
+        nextnumber = namespace.quantMap["TEMP"]
+        namespace.quantMap["TEMP"] += 1
+    nextinternal = 'QUANT'+str(nextnumber)
+    if nextinternal in namespace.atomics:
+        return nextInternal(namespace)
+    else:
+        return nextinternal
+
+def popQuantifiers(args,namespace,quantifiers,addQuants,addAtomics,addFunctions):
     '''
     This function removes all quantifiers from the statement, and replaces quantified variables
-    with thier internal representations. These representations are then stored in a map.
+    with thier internal representations. These representations are then stored in the namespace atomics map.
     '''
     removelist = []
     for arg in range(0,len(args)):
+        #Replace quants with internal representations
+        if args[arg] in addQuants.keys():
+            args[arg] = addQuants[args[arg]]
         #Hey look here is a quantifier
         if args[arg] in ["forAll","exists"]:
+            #Error checking. Some activities receive warnings
+            if args[arg+1] == "":
+                print "ERROR: functions cannot be quantified over"
+                return False
             #Move to the next argument
             arg += 1
-            
             #if the quantifier is written as forAll x forAll y forAll z blah(x,y,z)
             if isinstance(args[arg],Token) or not "[" in args[arg]:
                 removelist.append(arg-1)
                 removelist.append(arg)
+                interned = nextInternal(namespace)
+                addQuants[interned] = args[arg]
+                addQuants[args[arg]] = interned
                 quantifiers.append(args[arg-1])
-                quantifiers.append(args[arg])
+                quantifiers.append(interned)
             #If the quantifier is written with a list of symbols ex. forAll [x,y,z] blah(x,y,z)
             else:
                 #Store the quant type
@@ -396,20 +424,15 @@ def popQuantifiers(args,namespace,quantifiers,addAtomics,addFunctions):
                 while True:
                     newArg = args[arg].strip("[").strip("]")
                     removelist.append(arg)
+                    interned = nextInternal(namespace)
+                    addQuants[interned] = args[newArg]
+                    addQuants[args[newArg]] = interned
                     quantifiers.append(tempQuant)
-                    quantifiers.append(newArg)
+                    quantifiers.append(interned)
                     arg += 1
-                    if "]" in args[arg-1]: break
+                    if "]" in args[arg-1]: break        
     #Remove quantifiers from the arguments
     args = [i for j, i in enumerate(args) if j not in removelist]
-    #Error checking. Some activities receive warnings.
-    for arg in range(0,len(quantifiers)):
-        if isinstance(quantifiers[arg],Token):
-            print "WARNING: quantifying functions is inadvisable."
-        if quantifiers[arg] in quantifiers[:(arg-1)] and quantifiers[arg] not in ["forAll","exists"]:
-            print "WARNING: overloading quantifiers in the same statement is inadvisable."
-        if quantifiers[arg] in namespace.atomics and not addAtomics[quantifiers[arg]][0] in namespace.atomics[quantifiers[arg]]:
-            print "ERROR: quantifier \""+quantifiers[arg]+"\" is already in use, and it is assigned a different sort. Please use unique quantifiers"
     return args
 
 def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
@@ -535,7 +558,7 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
     return returnArgs,addAtomics[newToken][0]
             
 
-def TokenTree(expression,namespace,quantifiers,addAtomics,addFunctions):
+def TokenTree(expression,namespace,quantifiers,addQuants,addAtomics,addFunctions):
     '''
     This is the meat and potatoes function of the parser. It pulls together all of the
     other utility functions and decides which words are function names, which are
@@ -566,10 +589,14 @@ def TokenTree(expression,namespace,quantifiers,addAtomics,addFunctions):
     place = 0
     #Fix some common keyword mistakes
     replaceSynonyms(args)
+    #Rip out quantified statements
+    args = popQuantifiers(args,namespace,quantifiers,addQuants,addAtomics,addFunctions)
+    if isinstance(args,bool):
+        return False
     #Tokens can be nested, so this recurses thorough the tree
     for index in range(0,len(args)):
         if args[index] == "":
-            args[index] = TokenTree(temp[sublevel[place][0]:sublevel[place][1]],namespace,quantifiers,addAtomics,addFunctions)
+            args[index] = TokenTree(temp[sublevel[place][0]:sublevel[place][1]],namespace,quantifiers,addQuants,addAtomics,addFunctions)
             if not args[index]:
                 return False
             place += 1
@@ -577,8 +604,8 @@ def TokenTree(expression,namespace,quantifiers,addAtomics,addFunctions):
     if not assignTypes(args,namespace,addAtomics,addFunctions): return False  
     #Distinguish inbetween ambiguous symbols
     if not distinguishFunctions(args,namespace,addAtomics,addFunctions): return False
-    #Rip out quantified statements
-    args = popQuantifiers(args,namespace,quantifiers,addAtomics,addFunctions)  
+    #Check for prenex form
+    checkPrenex(args,addQuants)
     #Prefix inline logical functions
     args = prefixLogicalFunctions(args,addAtomics)
     #Prefix inline numeric functions
@@ -686,13 +713,14 @@ def tokenizeRandomDCEC(expression,namespace = ""):
     #These are the tokens that should be added to the namespace
     addAtomics = {}
     addFunctions = {}
-    returnToken = TokenTree(temp,namespace,quantifiers,addAtomics,addFunctions)
+    addQuants = {}
+    returnToken = TokenTree(temp,namespace,quantifiers,addQuants,addAtomics,addFunctions)
     #check for errors that occur in the lower level
     if isinstance(returnToken,bool) and returnToken == False:
-        return (False,False,False)
+        return (False,False,False,False)
     #Add quantifiers to the TokenTree
     returnToken = tokenizeQuantifiers(returnToken,quantifiers)
-    return (returnToken,addAtomics,addFunctions)
+    return (returnToken,addQuants,addAtomics,addFunctions)
         
 if __name__ == "__main__":
     '''
@@ -720,11 +748,14 @@ if __name__ == "__main__":
     testNAMESPACE.addBasicLogic()
     testNAMESPACE.addTextFunction("Boolean happy Agent Boolean")
     testNAMESPACE.addTextFunction("Boolean happy Boolean Boolean")
+    addQuants = {}
     addAtomics = {}
     addFunctions = {}     
-    tree,addAtomics,addFunctions = tokenizeRandomDCEC(temp,testNAMESPACE)
+    tree,addQuants,addAtomics,addFunctions = tokenizeRandomDCEC(temp,testNAMESPACE)
     if tree == False:
         pass
+    elif isinstance(tree,str):
+        print tree
     else:
         tree.printTree()
-        print tree.depthOf(),tree.widthOf(),addAtomics,addFunctions
+        print tree.depthOf(),tree.widthOf(),addQuants,addAtomics,addFunctions

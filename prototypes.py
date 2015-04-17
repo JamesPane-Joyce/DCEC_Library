@@ -5,6 +5,7 @@ class NAMESPACE:
         self.functions = {}
         self.atomics = {}
         self.sorts = {}
+        self.quantMap = {"TEMP": 0}
     def addCodeSort(self,name,inheritance = None):
         if inheritance == None: inheritance = []
         if not (isinstance(name,str) and isinstance(inheritance,list)):
