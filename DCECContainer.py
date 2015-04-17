@@ -30,8 +30,6 @@ class DCECContainer:
     def printStatement(self,statement,expressionType = "S"):
         if isinstance(statement,str):
             print statement
-        quantifiernames = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"]
-        quantifiervars = []
         place = 0
         if expressionType == "S":
             temp = statement.createSExpression()
@@ -40,26 +38,18 @@ class DCECContainer:
         else:
             print "ERROR: invalid notation type"
             return False
-        while place != -1:
-            place = temp.find("QUANTIFIER")
-            if place == -1:
-                break
-            temp2 = temp[place:place+20]
-            for potential in quantifiernames:
-                if potential in quantifiervars or potential in self.namespace.atomics.keys():
-                    continue
-                else:
-                    quantifiervars.append(potential)
-                    temp = temp.replace(temp2,potential)
-                    break
+        for quant in self.namespace.quantMap.keys():
+            if 'QUANT' in quant:
+                temp = temp.replace(quant,self.namespace.quantMap[quant])
         return temp
     
     def addStatement(self,statement):
         addAtomics = {}
         addFunctions = {}
+        addQuants = {}
         addee = statement
         if isinstance(addee,str):
-            addee,addAtomics,addFunctions = highLevelParsing.tokenizeRandomDCEC(addee,self.namespace)
+            addee,addQuants,addAtomics,addFunctions = highLevelParsing.tokenizeRandomDCEC(addee,self.namespace)
             if isinstance(addee,bool) and not addee:
                 print "ERROR: the statement "+str(statement)+" was not correctly formed."
                 return False
@@ -88,8 +78,10 @@ class DCECContainer:
                     print "ERROR: The atomic "+atomic+" cannot be both "+addAtomics[atomic][0]+" and "+self.namespace.atomics[atomic]+"."
                     return False
             else:
-                self.namespace.addCodeAtomic(atomic,addAtomics[atomic][0])
-            
+                self.namespace.addCodeAtomic(atomic,addAtomics[atomic][0])    
+        for quant in addQuants.keys():
+            if 'QUANT' in quant:
+                self.namespace.quantMap[quant] = addQuants[quant]
         self.statements.append(addee)
         self.checkMap[addee.createSExpression()] = addee  
         return True
@@ -204,7 +196,7 @@ class DCECContainer:
         stuff=highLevelParsing.tokenizeRandomDCEC(statement,self.namespace)
         if isinstance(stuff,bool) and not stuff:
             return False
-        dcecContainer.stupidLoop(stuff[0],stuff[2],stuff[1],self)
+        dcecContainer.stupidLoop(stuff[0],stuff[3],stuff[2],self)
         dcecContainer.addStatement(statement)
         return dcecContainer
 
@@ -212,20 +204,20 @@ if __name__ == "__main__":
     test = DCECContainer()
     test.namespace.addBasicDCEC()
     test.namespace.addBasicLogic()
-    #test.namespace.addTextFunction("Boolean hello Agent Moment")
+    test.namespace.addTextFunction("Boolean hello Agent Moment")
     #test.namespace.addTextFunction("Boolean hello Boolean")
     #test.namespace.addTextAtomic("Boolean earth")
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
-    test.tokenize(raw_input("Enter an expression: "))
-    test.addStatement(raw_input("Enter an expression: "))
+    #test.tokenize(raw_input("Enter an expression: "))
+    #test.addStatement(raw_input("Enter an expression: "))
     test.addStatement(raw_input("Enter an expression: "))
     test.save("TEST")
     new = DCECContainer()
     new.load("TEST")
     for x in test.statements:
-        x.printTree()
+        print test.printStatement(x)
     print test.namespace.atomics
     print test.namespace.functions
     print test.namespace.sorts
