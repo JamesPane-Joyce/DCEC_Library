@@ -442,10 +442,13 @@ def popQuantifiers(args,highlevel,sublevel,namespace,quantifiers,addQuants,addAt
                     newArg = args[arg].strip("[").strip("]")
                     removelist.append(arg)
                     interned = nextInternal(namespace)
+<<<<<<< HEAD
                     if newArg in namespace.sorts.keys():
                         addAtomics[interned] = [newArg]
                         arg += 1
                         newArg = args[arg].strip("[").strip("]")
+=======
+>>>>>>> 816e2e1161d09258ec637c03be9c5f80e9223428
                     addQuants[interned] = newArg
                     addQuants[newArg] = interned
                     quantifiers.append(tempQuant)
