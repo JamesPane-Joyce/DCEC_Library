@@ -23,8 +23,7 @@ def tuckFunctions(expression):
             funcname = expression[funcStart:firstParen]
             if funcname in ["not","negate"]:  
                 adder = expression[newIndex:funcStart]+"("+funcname+",("
-                closeParenPlace = getMatchingCloseParen(expression,funcStart+len(funcname))
-                expression = expression[:funcStart]+expression[funcStart:closeParenPlace]+"))"+expression[closeParenPlace+1:]
+                expression = expression[:funcStart]+expression[funcStart:].replace(")","))",1)
                 temp += adder
                 newIndex += len(adder)-2
             else:
