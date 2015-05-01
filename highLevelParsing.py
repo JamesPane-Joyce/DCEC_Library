@@ -425,8 +425,8 @@ def popQuantifiers(args,namespace,quantifiers,addQuants,addAtomics,addFunctions)
                     newArg = args[arg].strip("[").strip("]")
                     removelist.append(arg)
                     interned = nextInternal(namespace)
-                    addQuants[interned] = args[newArg]
-                    addQuants[args[newArg]] = interned
+                    addQuants[interned] = newArg
+                    addQuants[newArg] = interned
                     quantifiers.append(tempQuant)
                     quantifiers.append(interned)
                     arg += 1
