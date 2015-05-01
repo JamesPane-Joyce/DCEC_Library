@@ -389,29 +389,46 @@ def nextInternal(namespace):
     else:
         return nextinternal
 
-def popQuantifiers(args,namespace,quantifiers,addQuants,addAtomics,addFunctions):
+def popQuantifiers(args,highlevel,sublevel,namespace,quantifiers,addQuants,addAtomics,addFunctions):
     '''
     This function removes all quantifiers from the statement, and replaces quantified variables
     with thier internal representations. These representations are then stored in the namespace atomics map.
     '''
     removelist = []
+    place = 0
     for arg in range(0,len(args)):
         #Replace quants with internal representations
         if args[arg] in addQuants.keys():
             args[arg] = addQuants[args[arg]]
         #Hey look here is a quantifier
         if args[arg] in ["forAll","exists"]:
-            #Error checking. Some activities receive warnings
-            if args[arg+1] == "":
-                print "ERROR: functions cannot be quantified over"
-                return False
             #Move to the next argument
             arg += 1
+            #Check for args in parens
+            if args[arg] == "":
+                removelist.append(arg-1)
+                removelist.append(arg)
+                newArgs = highlevel[sublevel[0][0]:sublevel[0][1]][1:-1].split(",")
+                place += 1
+                interned = nextInternal(namespace)
+                for temp in newArgs:
+                    if temp in namespace.sorts.keys():
+                        addAtomics[interned] = [temp]
+                        continue
+                    else:
+                        addQuants[interned] = temp
+                        addQuants[temp] = interned
+                        quantifiers.append(args[arg-1])
+                        quantifiers.append(interned)
+                        interned = nextInternal(namespace)
             #if the quantifier is written as forAll x forAll y forAll z blah(x,y,z)
-            if isinstance(args[arg],Token) or not "[" in args[arg]:
+            elif isinstance(args[arg],Token) or not "[" in args[arg]:
                 removelist.append(arg-1)
                 removelist.append(arg)
                 interned = nextInternal(namespace)
+                if args[arg] in namespace.sorts.keys():
+                    addAtomics[interned] = [args[arg]]
+                    arg += 1
                 addQuants[interned] = args[arg]
                 addQuants[args[arg]] = interned
                 quantifiers.append(args[arg-1])
@@ -425,15 +442,19 @@ def popQuantifiers(args,namespace,quantifiers,addQuants,addAtomics,addFunctions)
                     newArg = args[arg].strip("[").strip("]")
                     removelist.append(arg)
                     interned = nextInternal(namespace)
+                    if newArg in namespace.sorts.keys():
+                        addAtomics[interned] = [newArg]
+                        arg += 1
+                        newArg = args[arg].strip("[").strip("]")
                     addQuants[interned] = newArg
                     addQuants[newArg] = interned
                     quantifiers.append(tempQuant)
                     quantifiers.append(interned)
                     arg += 1
-                    if "]" in args[arg-1]: break        
+                    if "]" in args[arg-1]: break     
     #Remove quantifiers from the arguments
     args = [i for j, i in enumerate(args) if j not in removelist]
-    return args
+    return args,place
 
 def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
     '''
@@ -589,8 +610,11 @@ def TokenTree(expression,namespace,quantifiers,addQuants,addAtomics,addFunctions
     place = 0
     #Fix some common keyword mistakes
     replaceSynonyms(args)
+    if isinstance(args,bool):
+        return False
     #Rip out quantified statements
-    args = popQuantifiers(args,namespace,quantifiers,addQuants,addAtomics,addFunctions)
+    args,offset = popQuantifiers(args,temp,sublevel,namespace,quantifiers,addQuants,addAtomics,addFunctions)
+    place += offset
     if isinstance(args,bool):
         return False
     #Tokens can be nested, so this recurses thorough the tree

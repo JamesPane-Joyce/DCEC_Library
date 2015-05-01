@@ -29,7 +29,7 @@ class DCECContainer:
     
     def printStatement(self,statement,expressionType = "S"):
         if isinstance(statement,str):
-            print statement
+            return statement
         place = 0
         if expressionType == "S":
             temp = statement.createSExpression()
@@ -83,7 +83,10 @@ class DCECContainer:
             if 'QUANT' in quant:
                 self.namespace.quantMap[quant] = addQuants[quant]
         self.statements.append(addee)
-        self.checkMap[addee.createSExpression()] = addee  
+        if not isinstance(addee,str):
+            self.checkMap[addee.createSExpression()] = addee
+        else:
+            self.checkMap[addee] = addee
         return True
 
 
