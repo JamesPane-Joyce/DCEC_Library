@@ -429,6 +429,7 @@ def popQuantifiers(args,highlevel,sublevel,namespace,quantifiers,addQuants,addAt
                 if args[arg] in namespace.sorts.keys():
                     addAtomics[interned] = [args[arg]]
                     arg += 1
+                    removelist.append(arg)
                 addQuants[interned] = args[arg]
                 addQuants[args[arg]] = interned
                 quantifiers.append(args[arg-1])
@@ -440,18 +441,22 @@ def popQuantifiers(args,highlevel,sublevel,namespace,quantifiers,addQuants,addAt
                 removelist.append(arg-1)
                 while True:
                     newArg = args[arg].strip("[").strip("]")
+                    args[arg] = args[arg].strip("[")
                     removelist.append(arg)
                     interned = nextInternal(namespace)
                     if newArg in namespace.sorts.keys():
                         addAtomics[interned] = [newArg]
                         arg += 1
+                        removelist.append(arg)
                         newArg = args[arg].strip("[").strip("]")
                     addQuants[interned] = newArg
                     addQuants[newArg] = interned
                     quantifiers.append(tempQuant)
                     quantifiers.append(interned)
                     arg += 1
-                    if "]" in args[arg-1]: break     
+                    if "]" in args[arg-1]:
+                        args[arg-1] = args[arg-1].strip("]")
+                        break
     #Remove quantifiers from the arguments
     args = [i for j, i in enumerate(args) if j not in removelist]
     return args,place
@@ -508,10 +513,12 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
     if funcName in namespace.functions.keys():
         for item in namespace.functions[funcName]:
             valid = True
+            levels = []
             if not len(item[1]) <= len(realTypes): continue
             for arg in range(0,len(item[1])):
-                if namespace.noConflict(realTypes[arg],item[1][arg]):
-                    pass
+                returnthing = namespace.noConflict(realTypes[arg],item[1][arg],0)
+                if returnthing[0]:
+                    levels += [returnthing[1]]
                 elif item[1][arg] == "Fluent": #Fluents are special, they can take bools, ect.
                     if arg in exceptions:
                         pass
@@ -522,14 +529,16 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
                     valid = False
                     break
             if valid:
-                validItems.append(item)
+                validItems.append([item,levels])
     if funcName in addFunctions.keys():
         for item in addFunctions[funcName]:
             valid = True
+            levels = []
             if not len(item[1]) <= len(realTypes): continue
             for arg in range(0,len(item[1])):
-                if namespace.noConflict(realTypes[arg],item[1][arg]):
-                    pass
+                returnthing = namespace.noConflict(realTypes[arg],item[1][arg],0)
+                if returnthing[0]:
+                    levels += [returnthing[1]]
                 elif item[1][arg] == "Fluent": #Fluents are special, they can take bools, ect.
                     if arg in exceptions:
                         pass
@@ -540,16 +549,25 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
                     valid = False
                     break
             if valid:
-                validItems.append(item)
+                validItems.append([item,levels])
     if len(validItems) > 1:
-        print "ERROR: more than one possible interpretation for function \""+funcName+"\". Please type your atomics."
-        print "   The interpretations are:"
-        for x in validItems:
-            print "  ",x[1]
-        print "   you gave:"
-        print "  ",realTypes
-        return False,[]
-    if len(validItems) == 0:
+        #Sort by length first
+        sortedItems = sorted(validItems,key=lambda item: len(item[1]),reverse = True)
+        if len(sortedItems[0][1]) == len(sortedItems[1][1]):
+            sortedItems = sorted(validItems,key=lambda item: sum(item[1]))
+            if sum(sortedItems[0][1]) == sum(sortedItems[1][1]):
+                print "ERROR: more than one possible interpretation for function \""+funcName+"\". Please type your atomics."
+                print "   The interpretations are:"
+                for x in sortedItems:
+                    print "interpretation: ",x[0]," Constraining factor: ",sum(x[1])
+                print "   you gave:"
+                print "  ",realTypes
+                return False,[]
+            else:
+                validItems = [sortedItems[0]]
+        else:
+            validItems = [sortedItems[0]]
+    elif len(validItems) == 0:
         print "ERROR: the function named \""+funcName+"\" does not take arguments of the type provided. You cannot overload inline. Use prototypes."
         print "   the possible inputs for \""+funcName+"\" are:"
         #Print the possible interpretations
@@ -563,19 +581,19 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
         print "  ",realTypes
         #Throw an error
         return False,[]
-    else:
-        #Assign Types
-        for arg in range(0,len(validItems[0][1])):
-            if tempArgs[arg] in addAtomics.keys():
-                addAtomics[tempArgs[arg]].append(validItems[0][1][arg])
-            else:
-                addAtomics[tempArgs[arg]] = [validItems[0][1][arg]]
-        #Make a token of the right function
-        newToken = Token(funcName,tempArgs[:len(validItems[0][1])])
-        addAtomics[newToken] = [validItems[0][0]]
-        #Remove used args from list:
-        returnArgs = [newToken]
-        returnArgs += tempArgs[len(validItems[0][1]):]
+    #Assign Types
+    validItems = [validItems[0][0]]
+    for arg in range(0,len(validItems[0][1])):
+        if tempArgs[arg] in addAtomics.keys():
+            addAtomics[tempArgs[arg]].append(validItems[0][1][arg])
+        else:
+            addAtomics[tempArgs[arg]] = [validItems[0][1][arg]]
+    #Make a token of the right function
+    newToken = Token(funcName,tempArgs[:len(validItems[0][1])])
+    addAtomics[newToken] = [validItems[0][0]]
+    #Remove used args from list:
+    returnArgs = [newToken]
+    returnArgs += tempArgs[len(validItems[0][1]):]
     return returnArgs,addAtomics[newToken][0]
             
 
@@ -770,8 +788,16 @@ if __name__ == "__main__":
     testNAMESPACE.addBasicDCEC()
     testNAMESPACE.addBasicNumerics()
     testNAMESPACE.addBasicLogic()
-    testNAMESPACE.addTextFunction("Boolean happy Agent Boolean")
-    testNAMESPACE.addTextFunction("Boolean happy Boolean Boolean")
+    testNAMESPACE.addTextSort("typedef Certainty Numeric")
+    testNAMESPACE.addTextFunction("Certainty decrement Certainty")
+    testNAMESPACE.addTextFunction("Boolean lessThanOrEquals Certainty Certainty")
+    testNAMESPACE.addTextFunction("Boolean lessThan Certainty Certainty")
+    testNAMESPACE.addTextFunction("Boolean equals Certainty Numeric")
+    testNAMESPACE.addTextFunction("Boolean equals Certainty Certainty")
+    testNAMESPACE.addTextFunction("Boolean equals Numeric Certainty")
+    testNAMESPACE.addTextFunction("Boolean min Certainty Certainty")
+    testNAMESPACE.addTextFunction("Boolean generalization Certainty Certainty")
+    testNAMESPACE.addTextFunction("Boolean B Agent Moment Boolean Certainty")
     addQuants = {}
     addAtomics = {}
     addFunctions = {}     
