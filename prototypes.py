@@ -178,13 +178,13 @@ class NAMESPACE:
         elif type2 in self.sorts[type1]:
             return (True,level+1)
         else:
+            returnlist = []
             for x in self.sorts[type1]:
-                recurseReturn = self.noConflict(type1,x,level+1)
-                returnlist = []
+                recurseReturn = self.noConflict(x,type2,level+1)
                 if recurseReturn[0]:
                     returnlist.append([recurseReturn[1]])
             if len(returnlist) > 0:
-                return (True,min(returnlist))
+                return (True,min(returnlist)[0])
             else:
                 return (False,level)
         return (False,level)

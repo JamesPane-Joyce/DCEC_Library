@@ -518,7 +518,7 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
             for arg in range(0,len(item[1])):
                 returnthing = namespace.noConflict(realTypes[arg],item[1][arg],0)
                 if returnthing[0]:
-                    levels += [returnthing[1]]
+                    levels.append(returnthing[1])
                 elif item[1][arg] == "Fluent": #Fluents are special, they can take bools, ect.
                     if arg in exceptions:
                         pass
@@ -538,7 +538,7 @@ def assignArgs(funcName,args,namespace,addAtomics,addFunctions):
             for arg in range(0,len(item[1])):
                 returnthing = namespace.noConflict(realTypes[arg],item[1][arg],0)
                 if returnthing[0]:
-                    levels += [returnthing[1]]
+                    levels.append(returnthing[1])
                 elif item[1][arg] == "Fluent": #Fluents are special, they can take bools, ect.
                     if arg in exceptions:
                         pass
