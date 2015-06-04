@@ -169,14 +169,25 @@ class NAMESPACE:
         self.addCodeFunction("less","Boolean",["Numeric","Numeric"])
         self.addCodeFunction("lessOrEqual","Boolean",["Numeric","Numeric"])
         self.addCodeFunction("equals","Boolean",["Numeric","Numeric"])        
-    def noConflict(self,type1,type2):
+    def noConflict(self,type1,type2,level):
+        #print type1,type2
         if type1 == "?":
-            return True
+            return (True,level)
         elif type1 == type2:
-            return True
+            return (True,level)
         elif type2 in self.sorts[type1]:
-            return True
-        return False
+            return (True,level+1)
+        else:
+            for x in self.sorts[type1]:
+                recurseReturn = self.noConflict(type1,x,level+1)
+                returnlist = []
+                if recurseReturn[0]:
+                    returnlist.append([recurseReturn[1]])
+            if len(returnlist) > 0:
+                return (True,min(returnlist))
+            else:
+                return (False,level)
+        return (False,level)
     def printNAMESPACE(self):
         for item in self.sorts.keys():
             print item,self.sorts[item]
