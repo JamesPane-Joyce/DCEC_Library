@@ -797,7 +797,7 @@ if __name__ == "__main__":
     testNAMESPACE.addTextFunction("Boolean equals Numeric Certainty")
     testNAMESPACE.addTextFunction("Boolean min Certainty Certainty")
     testNAMESPACE.addTextFunction("Boolean generalization Certainty Certainty")
-    testNAMESPACE.addTextFunction("Boolean B Agent Moment Boolean Certainty")
+    #testNAMESPACE.addTextFunction("Boolean B Agent Moment Boolean Certainty")
     addQuants = {}
     addAtomics = {}
     addFunctions = {}     

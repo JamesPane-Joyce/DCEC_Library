@@ -61,7 +61,7 @@ class DCECContainer:
         for atomic in addAtomics.keys():
             if isinstance(atomic,highLevelParsing.Token): continue #Tokens are not currently stored
             for potentialtype in range(0,len(addAtomics[atomic])):
-                if not self.namespace.noConflict(addAtomics[atomic][0],addAtomics[atomic][potentialtype]):
+                if not self.namespace.noConflict(addAtomics[atomic][0],addAtomics[atomic][potentialtype],0)[0]:
                     print "ERROR: The atomic "+atomic+" cannot be both "+addAtomics[atomic][potentialtype]+" and "+addAtomics[atomic][0]+". (This is caused by assigning different sorts to two atomics inline. Did you rely on the parser for sorting?)"
                     return False
         for function in addFunctions.keys():
@@ -107,7 +107,7 @@ class DCECContainer:
             else:
                 returner = True
                 for r in range(0,len(x[1])):
-                    if not tmpTypes[r] == None and self.namespace.noConflict(tmpTypes[r],x[1][r],):
+                    if not tmpTypes[r] == None and self.namespace.noConflict(tmpTypes[r],x[1][r],0)[0]:
                         continue
                     else:
                         returner = False
@@ -136,7 +136,7 @@ class DCECContainer:
             else:
                 returner = True
                 for r in range(0,len(x[1])):
-                    if not tmpTypes[r] == None and self.namespace.noConflict(tmpTypes[r],x[1][r],):
+                    if not tmpTypes[r] == None and self.namespace.noConflict(tmpTypes[r],x[1][r],0)[0]:
                         continue
                     else:
                         returner = False
