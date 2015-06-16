@@ -135,7 +135,7 @@ class NAMESPACE:
         #Fluent Functions
         self.addCodeFunction("action","Action",["Agent","ActionType"])
         self.addCodeFunction("initially","Boolean",["Fluent"])
-        self.addCodeFunction("holds","Boolean",["Event","Moment"])
+        self.addCodeFunction("holds","Boolean",["Fluent","Moment"])
         self.addCodeFunction("happens","Boolean",["Event","Moment"])
         self.addCodeFunction("clipped","Boolean",["Moment","Fluent","Moment"])
         self.addCodeFunction("initiates","Boolean",["Event","Fluent","Moment"])
