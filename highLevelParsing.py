@@ -133,6 +133,7 @@ def prefixLogicalFunctions(args,addAtomics):
         if args[arg] == "not" and arg+2 < len(args) and not args[arg+1] in logicKeywords:
             print "WARNING: ambiguous not statement. This parser assumes standard order of logical operations. Please use prefix notation or parentheses to resolve this ambiguity."
     for word in logicKeywords:
+        index = 0
         while word in args:
             index = args.index(word)
             if word == "not":
@@ -145,9 +146,12 @@ def prefixLogicalFunctions(args,addAtomics):
                 #Replace infix notation with tokenized representation
                 args = args[:index+1]+args[index+2:]
                 args[index] = newToken
-                continue
+                break
             in1 = index-1
             in2 = index+1
+            #If the thing is actually prefix anyway > twitch <
+            if in1 < 0:
+                break
             #Tucks the arithmetic expression into a token
             newToken = Token(word,[args[in1],args[in2]])
             #Assign sorts to the atomics used
@@ -193,6 +197,9 @@ def prefixEMDAS(args,addAtomics):
                     continue
                 in1 = index-1   
                 in2 = index+1
+                #If it mixes both forms > twitch <
+                if in1 < 0:
+                    break
                 #Tucks the arithmetic expression into a token
                 newToken = Token(word,[args[in1],args[in2]])
                 #Assign sorts to the atomics used
