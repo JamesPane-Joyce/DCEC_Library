@@ -53,6 +53,8 @@ class DCECContainer:
             if isinstance(addee,bool) and not addee:
                 print "ERROR: the statement "+str(statement)+" was not correctly formed."
                 return False
+            elif isinstance(addee,str):
+                return True
         elif isinstance(addee,highLevelParsing.Token):
             pass
         else:
@@ -214,15 +216,17 @@ if __name__ == "__main__":
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.tokenize(raw_input("Enter an expression: "))
-    #test.addStatement(raw_input("Enter an expression: "))
+    test.addStatement(raw_input("Enter an expression: "))
     test.addStatement(raw_input("Enter an expression: "))
     test.save("TEST")
     new = DCECContainer()
     new.load("TEST")
+    print len(test.statements)
     for x in test.statements:
         print test.printStatement(x)
     print test.namespace.atomics
     print test.namespace.functions
     print test.namespace.sorts
-    print test.sortsOfParams(test.statements[0])
-    print test.sortOf(test.statements[0])
+    if len(test.statements) > 0:
+        print test.sortsOfParams(test.statements[0])
+        print test.sortOf(test.statements[0])
