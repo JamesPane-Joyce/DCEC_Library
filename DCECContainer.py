@@ -199,8 +199,10 @@ class DCECContainer:
             return False
         dcecContainer=DCECContainer()
         stuff=highLevelParsing.tokenizeRandomDCEC(statement,self.namespace)
-        if isinstance(stuff,bool) and not stuff:
+        if isinstance(stuff[0],bool) and not stuff[0]:
             return False
+        elif stuff[0] == "":
+            return True
         dcecContainer.stupidLoop(stuff[0],stuff[3],stuff[2],self)
         dcecContainer.addStatement(statement)
         return dcecContainer
