@@ -53,7 +53,7 @@ class DCECContainer:
             if isinstance(addee,bool) and not addee:
                 print "ERROR: the statement "+str(statement)+" was not correctly formed."
                 return False
-            elif isinstance(addee,str):
+            elif addee == "":
                 return True
         elif isinstance(addee,highLevelParsing.Token):
             pass
