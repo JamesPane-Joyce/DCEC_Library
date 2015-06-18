@@ -64,6 +64,14 @@ class Token:
         self.createFExpression()
         print self.Fexpression
 
+def removeComments(expression):
+    index = expression.find(";")
+    if index != -1:
+        expression = expression[:index]
+    if len(expression) == 0:
+        expression = ""
+    return expression
+    
 def functorizeSymbols(expression):
     '''
     This function replaces all symbols with the appropreate internal funciton name.
@@ -615,6 +623,9 @@ def TokenTree(expression,namespace,quantifiers,addQuants,addAtomics,addFunctions
     '''
     #Strip the outer parens
     temp = expression[1:-1].strip(",")
+    #check for an empty string
+    if temp == "":
+        return temp
     #Find the sub-level tokens at this level of parsing
     level = 0
     highlevel = ""
@@ -742,12 +753,17 @@ def tokenizeRandomDCEC(expression,namespace = ""):
         namespace.addBasicDCEC()
     else:
         namespace = namespace
+    #Remove Comments
+    temp = removeComments(expression)
+    #Check for an empty string
+    if temp == "()":
+        return ("",{},{},{})
     #Check for a parentheses mismatch error
     if not cleaning.checkParens(expression):
         print "ERROR: parentheses mismatch error."
-        return (False,False,False)
+        return (False,False,False,False)
     #Make symbols into functions
-    temp = functorizeSymbols(expression)
+    temp = functorizeSymbols(temp)
     #Strip comments
     temp = cleaning.stripComments(temp)
     #Strip whitespace so you can do the rest of the parsing
@@ -777,7 +793,9 @@ if __name__ == "__main__":
     '''
     inputin = raw_input("Enter an expression: ")
     #Make symbols into functions
-    temp = functorizeSymbols(inputin)
+    temp = removeComments(inputin)
+    print temp
+    temp = functorizeSymbols(temp)
     print temp
     #Strip comments
     temp = cleaning.stripComments(temp)
@@ -795,15 +813,8 @@ if __name__ == "__main__":
     testNAMESPACE.addBasicDCEC()
     testNAMESPACE.addBasicNumerics()
     testNAMESPACE.addBasicLogic()
-    testNAMESPACE.addTextSort("typedef Certainty Numeric")
-    testNAMESPACE.addTextFunction("Certainty decrement Certainty")
-    testNAMESPACE.addTextFunction("Boolean lessThanOrEquals Certainty Certainty")
-    testNAMESPACE.addTextFunction("Boolean lessThan Certainty Certainty")
-    testNAMESPACE.addTextFunction("Boolean equals Certainty Numeric")
-    testNAMESPACE.addTextFunction("Boolean equals Certainty Certainty")
-    testNAMESPACE.addTextFunction("Boolean equals Numeric Certainty")
-    testNAMESPACE.addTextFunction("Boolean min Certainty Certainty")
-    testNAMESPACE.addTextFunction("Boolean generalization Certainty Certainty")
+    testNAMESPACE.addTextFunction("Numeric hasPriority Object")
+    testNAMESPACE.addTextFunction("Action lose Object")
     #testNAMESPACE.addTextFunction("Boolean B Agent Moment Boolean Certainty")
     addQuants = {}
     addAtomics = {}
