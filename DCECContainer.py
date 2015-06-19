@@ -76,7 +76,7 @@ class DCECContainer:
         for atomic in addAtomics.keys():
             if isinstance(atomic,highLevelParsing.Token): continue #Tokens are not currently stored
             elif atomic in self.namespace.atomics.keys():
-                if not addAtomics[atomic][0] == self.namespace.atomics[atomic]:
+                if not self.namespace.noConflict(self.namespace.atomics[atomic],addAtomics[atomic][0],0)[0]:
                     print "ERROR: The atomic "+atomic+" cannot be both "+addAtomics[atomic][0]+" and "+self.namespace.atomics[atomic]+"."
                     return False
             else:
@@ -211,8 +211,8 @@ if __name__ == "__main__":
     test = DCECContainer()
     test.namespace.addBasicDCEC()
     test.namespace.addBasicLogic()
-    test.namespace.addTextFunction("Boolean hello Agent Moment")
-    #test.namespace.addTextFunction("Boolean hello Boolean")
+    test.namespace.addTextFunction("Agent james")
+    test.namespace.addTextFunction("Boolean hello Object")
     #test.namespace.addTextAtomic("Boolean earth")
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
