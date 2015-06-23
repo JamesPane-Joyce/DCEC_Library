@@ -178,8 +178,27 @@ class DCECContainer:
                     self.stupidSortDefine(atomics[token][0],oldContainer)
                     for arg in argTypes:
                         self.stupidSortDefine(arg,oldContainer)
-                    self.namespace.addCodeFunction(token.funcName,atomics[token][0],argTypes)
+                    poss = []
+                    map = {}
+                    for x in oldContainer.namespace.functions[token.funcName]:
+                        deep = 0
+                        compat,depth = oldContainer.namespace.noConflict(x[0],atomics[token][0],0)
+                        if not compat:
+                            continue
+                        else:
+                            deep += depth
+                        args = [atomics[arg][0] for arg in token.args]
+                        if len(args) != len(x[1]):
+                            continue
+                        for y in range(0,len(x[1])):
+                            compat,depth = oldContainer.namespace.noConflict(args[y],x[1][y],0)
+                            deep += depth
+                        poss.append(deep)
+                        map[deep] = x
+                    final = map[min(poss)]
+                    self.namespace.addCodeFunction(token.funcName,final[0],final[1])
                 else:
+                    #This should never happen, but if it does make a new function
                     for x in functions[token.funcName]:
                         self.stupidSortDefine(x[0],oldContainer)
                         for y in x[1]:
@@ -211,24 +230,30 @@ if __name__ == "__main__":
     test = DCECContainer()
     test.namespace.addBasicDCEC()
     test.namespace.addBasicLogic()
-    test.namespace.addTextFunction("Agent james")
-    test.namespace.addTextFunction("Boolean hello Object")
+    test.namespace.addTextFunction("ActionType heal Agent")
+    #test.namespace.addTextFunction("Agent james")
+    #test.namespace.addTextFunction("Boolean hello Object")
+    #test.namespace.addTextFunction("Boolean equals Object Object")
     #test.namespace.addTextAtomic("Boolean earth")
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.namespace.addTextSort(raw_input("Enter a sort: "))
     #test.tokenize(raw_input("Enter an expression: "))
     test.addStatement(raw_input("Enter an expression: "))
-    test.addStatement(raw_input("Enter an expression: "))
-    test.save("TEST")
-    new = DCECContainer()
-    new.load("TEST")
-    print len(test.statements)
+    new = test.tokenize(raw_input("Enter an expression: "))
+    #print new.statements[0].createSExpression(),new.namespace.atomics
+    #test.save("TEST")
+    print test.statements,test.namespace.atomics,test.namespace.functions
+    print new.statements,new.namespace.atomics,new.namespace.functions
+    #new.load("TEST")
+    #print len(test.statements)
     for x in test.statements:
-        print test.printStatement(x)
-    print test.namespace.atomics
-    print test.namespace.functions
-    print test.namespace.sorts
+        #print test.printStatement(x)
+        pass
+    #print test.namespace.atomics
+    #print test.namespace.functions
+    #print test.namespace.sorts
     if len(test.statements) > 0:
-        print test.sortsOfParams(test.statements[0])
-        print test.sortOf(test.statements[0])
+        #print test.sortsOfParams(test.statements[0])
+        #print test.sortOf(test.statements[0])
+        pass

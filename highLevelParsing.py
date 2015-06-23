@@ -813,8 +813,7 @@ if __name__ == "__main__":
     testNAMESPACE.addBasicDCEC()
     testNAMESPACE.addBasicNumerics()
     testNAMESPACE.addBasicLogic()
-    testNAMESPACE.addTextFunction("Numeric hasPriority Object")
-    testNAMESPACE.addTextFunction("Action lose Object")
+    testNAMESPACE.addTextFunction("ActionType heal Agent")
     #testNAMESPACE.addTextFunction("Boolean B Agent Moment Boolean Certainty")
     addQuants = {}
     addAtomics = {}
