@@ -161,8 +161,9 @@ class DCECContainer:
     #TODO replace with iterator
     def stupidLoop(self,token,functions,atomics,oldContainer):
         if isinstance(token,str):
-            if token in oldContainer.namespace.atomics.keys():
-                self.namespace.addCodeAtomic(token,oldContainer.namespace.atomics[token])
+            if oldContainer.sortOf(token)==None:
+                self.stupidSortDefine(atomics[token][0],oldContainer)
+                self.namespace.addCodeAtomic(token,atomics[token][0])
             else:
                 self.stupidSortDefine(oldContainer.sortOf(token),oldContainer)
                 self.namespace.addCodeAtomic(token,oldContainer.sortOf(token))
